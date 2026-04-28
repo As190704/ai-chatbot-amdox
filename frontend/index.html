@@ -256,6 +256,13 @@
         color: #b91c1c;
       }
 
+      .field-label {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+
       .insights {
         display: grid;
         gap: 16px;
@@ -443,13 +450,13 @@
               </div>
             </div>
             <div class="chat-input">
-              <label class="helper-text" for="apiBase">API base URL</label>
+              <label class="field-label" for="apiBase">API base URL</label>
               <div class="input-inline">
                 <input id="apiBase" type="text" placeholder="API base URL (default: http://localhost:8000)" />
                 <button class="secondary" id="saveApiBase">Save API</button>
               </div>
               <small id="apiBaseStatus" class="helper-text">Use HTTPS for production deployments.</small>
-              <label class="helper-text" for="userInput">Message</label>
+              <label class="field-label" for="userInput">Message</label>
               <textarea id="userInput" placeholder="Type a message..."></textarea>
               <div class="chat-input-row">
                 <div>
@@ -640,7 +647,7 @@
         Object.entries(insightMap).forEach(([elementId, key]) => {
           const el = document.getElementById(elementId);
           if (!el) {
-            console.warn(`Missing insight element: ${elementId}`);
+            console.warn(`Missing insight element: ${elementId} for key: ${key}`);
             return;
           }
           const value = payload?.[key];
@@ -795,7 +802,8 @@
           if (!["http:", "https:"].includes(url.protocol)) {
             return { value: null, error: "URL must start with http:// or https://." };
           }
-          const path = url.pathname === "/" ? "" : url.pathname.replace(/\/+$/, "");
+          const path =
+            url.pathname && url.pathname !== "/" ? url.pathname.replace(/\/+$/, "") : "";
           const normalized = `${url.origin}${path}`;
           return { value: normalized || fallback, error: null };
         } catch (error) {
