@@ -443,11 +443,13 @@
               </div>
             </div>
             <div class="chat-input">
+              <label class="helper-text" for="apiBase">API base URL</label>
               <div class="input-inline">
                 <input id="apiBase" type="text" placeholder="API base URL (default: http://localhost:8000)" />
                 <button class="secondary" id="saveApiBase">Save API</button>
               </div>
               <small id="apiBaseStatus" class="helper-text">Use HTTPS for production deployments.</small>
+              <label class="helper-text" for="userInput">Message</label>
               <textarea id="userInput" placeholder="Type a message..."></textarea>
               <div class="chat-input-row">
                 <div>
@@ -594,6 +596,7 @@
     </footer>
 
     <script>
+      const DEFAULT_API_BASE = "http://localhost:8000";
       const chatMessages = document.getElementById("chatMessages");
       const userInput = document.getElementById("userInput");
       const sendButton = document.getElementById("sendMessage");
@@ -615,7 +618,7 @@
 
       const state = {
         sessionId: null,
-        apiBase: localStorage.getItem("amx_api_base") || "http://localhost:8000",
+        apiBase: localStorage.getItem("amx_api_base") || DEFAULT_API_BASE,
       };
 
       apiBaseInput.value = state.apiBase;
@@ -636,7 +639,10 @@
       function updateInsights(payload) {
         Object.entries(insightMap).forEach(([elementId, key]) => {
           const el = document.getElementById(elementId);
-          if (!el) return;
+          if (!el) {
+            console.warn(`Missing insight element: ${elementId}`);
+            return;
+          }
           const value = payload?.[key];
           el.textContent = value === undefined || value === null ? "—" : value;
         });
@@ -782,14 +788,15 @@
 
       function normalizeApiBase(rawValue) {
         const trimmed = rawValue.trim();
-        const fallback = "http://localhost:8000";
+        const fallback = DEFAULT_API_BASE;
         if (!trimmed) return { value: fallback, error: null };
         try {
           const url = new URL(trimmed);
           if (!["http:", "https:"].includes(url.protocol)) {
             return { value: null, error: "URL must start with http:// or https://." };
           }
-          const normalized = `${url.origin}${url.pathname}`.replace(/\/+$/, "");
+          const path = url.pathname === "/" ? "" : url.pathname.replace(/\/+$/, "");
+          const normalized = `${url.origin}${path}`;
           return { value: normalized || fallback, error: null };
         } catch (error) {
           const message = error?.message ? ` (${error.message})` : "";
@@ -823,7 +830,8 @@
         }
         items.forEach((item) => {
           const li = document.createElement("li");
-          li.textContent = `${item[labelKey]} — ${item.count}`;
+          const label = item?.[labelKey] || "Unknown";
+          li.textContent = `${label} — ${item.count ?? 0}`;
           list.appendChild(li);
         });
       }
