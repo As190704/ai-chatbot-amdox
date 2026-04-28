@@ -436,7 +436,7 @@
           detected intent, sentiment, and entities in real time.
         </p>
         <div class="chat-container">
-          <div class="chat-window">
+          <div class="chat-window" id="chatWindow">
             <div class="chat-messages" id="chatMessages">
               <div class="message bot">
                 Hello! I am the AMDOX AI assistant. Ask me about pricing, support, or anything else.
@@ -462,6 +462,7 @@
               <small class="section-lead" style="margin: 0;">
                 Tip: run the backend with <code>python start.py</code> and keep it on localhost:8000.
               </small>
+              <div id="chatStatus" class="helper-text" role="status" aria-live="polite"></div>
             </div>
           </div>
 
@@ -601,6 +602,8 @@
       const apiBaseInput = document.getElementById("apiBase");
       const saveApiBaseBtn = document.getElementById("saveApiBase");
       const apiBaseStatus = document.getElementById("apiBaseStatus");
+      const chatStatus = document.getElementById("chatStatus");
+      const chatWindow = document.getElementById("chatWindow");
       const refreshAnalyticsBtn = document.getElementById("refreshAnalytics");
 
       const insightMap = {
@@ -616,7 +619,6 @@
       };
 
       apiBaseInput.value = state.apiBase;
-      apiBaseStatus.textContent = "Use HTTPS for production deployments.";
 
       function appendMessage(role, text) {
         const message = document.createElement("div");
@@ -679,6 +681,8 @@
         userInput.value = "";
         sendButton.disabled = true;
         sendButton.textContent = "Sending...";
+        chatStatus.textContent = "Sending message...";
+        chatWindow.setAttribute("aria-busy", "true");
 
         try {
           const response = await fetch(`${state.apiBase}/api/chat`, {
@@ -697,15 +701,18 @@
           appendMessage("bot", data.reply);
           updateSessionId(data.session_id);
           updateInsights(data);
+          chatStatus.textContent = "Message sent.";
         } catch (error) {
           appendMessage(
             "bot",
             `⚠️ ${error?.message || "Unable to reach the API. Check the server and API base URL."}`
           );
+          chatStatus.textContent = "Message failed to send.";
           console.error(error);
         } finally {
           sendButton.disabled = false;
           sendButton.textContent = "Send Message";
+          chatWindow.setAttribute("aria-busy", "false");
         }
       }
 
@@ -785,7 +792,8 @@
           const normalized = `${url.origin}${url.pathname}`.replace(/\/+$/, "");
           return { value: normalized || fallback, error: null };
         } catch (error) {
-          return { value: null, error: "Enter a valid HTTP or HTTPS URL." };
+          const message = error?.message ? ` (${error.message})` : "";
+          return { value: null, error: `Enter a valid HTTP or HTTPS URL.${message}` };
         }
       }
 
