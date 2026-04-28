@@ -455,7 +455,7 @@
                 <input id="apiBase" type="text" placeholder="API base URL (default: http://localhost:8000)" />
                 <button class="secondary" id="saveApiBase">Save API</button>
               </div>
-              <small id="apiBaseStatus" class="helper-text">Use HTTPS for production deployments.</small>
+              <small id="apiBaseStatus" class="helper-text"></small>
               <label class="field-label" for="userInput">Message</label>
               <textarea id="userInput" placeholder="Type a message..."></textarea>
               <div class="chat-input-row">
@@ -469,7 +469,8 @@
                 </div>
               </div>
               <small class="section-lead" style="margin: 0;">
-                Tip: run the backend with <code>python start.py</code> and keep it on localhost:8000.
+                Tip: start the backend from <code>backend/start.py</code> and keep it on
+                <code>http://localhost:8000</code>.
               </small>
               <div id="chatStatus" class="helper-text" role="status" aria-live="polite"></div>
             </div>
@@ -604,6 +605,7 @@
 
     <script>
       const DEFAULT_API_BASE = "http://localhost:8000";
+      const HTTPS_WARNING = "Use HTTPS for production deployments.";
       const chatMessages = document.getElementById("chatMessages");
       const userInput = document.getElementById("userInput");
       const sendButton = document.getElementById("sendMessage");
@@ -629,6 +631,7 @@
       };
 
       apiBaseInput.value = state.apiBase;
+      apiBaseStatus.textContent = HTTPS_WARNING;
 
       function appendMessage(role, text) {
         const message = document.createElement("div");
@@ -708,7 +711,10 @@
           });
           if (!response.ok) {
             const detail = await extractErrorDetails(response);
-            throw new Error(`API error ${response.status}${detail}`);
+            const message = detail
+              ? `API error ${response.status}: ${detail}`
+              : `API error ${response.status}`;
+            throw new Error(message);
           }
           const data = await response.json();
           appendMessage("bot", data.reply);
@@ -756,7 +762,7 @@
         localStorage.setItem("amx_api_base", state.apiBase);
         apiBaseStatus.textContent = state.apiBase.startsWith("https://")
           ? "API base saved."
-          : "API base saved. Use HTTPS for production deployments.";
+          : `API base saved. ${HTTPS_WARNING}`;
       }
 
       async function refreshAnalytics() {
@@ -767,7 +773,10 @@
           const response = await fetch(`${state.apiBase}/api/analytics`);
           if (!response.ok) {
             const detail = await extractErrorDetails(response);
-            throw new Error(`Analytics error ${response.status}${detail}`);
+            const message = detail
+              ? `Analytics error ${response.status}: ${detail}`
+              : `Analytics error ${response.status}`;
+            throw new Error(message);
           }
           const data = await response.json();
 
@@ -807,8 +816,10 @@
           const normalized = `${url.origin}${path}`;
           return { value: normalized || fallback, error: null };
         } catch (error) {
-          const message = error?.message ? ` (${error.message})` : "";
-          return { value: null, error: `Enter a valid HTTP or HTTPS URL.${message}` };
+          return {
+            value: null,
+            error: "Enter a valid HTTP or HTTPS URL that includes http:// or https://.",
+          };
         }
       }
 
@@ -818,10 +829,10 @@
           if (contentType.includes("application/json")) {
             const body = await response.json();
             const detail = body?.detail || body?.error || body?.message;
-            return detail ? ` - ${detail}` : "";
+            return detail || "";
           }
           const text = await response.text();
-          return text ? ` - ${text}` : "";
+          return text || "";
         } catch (error) {
           return "";
         }
