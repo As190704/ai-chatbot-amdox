@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AMDOX Dynamic AI Chatbot</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f8fb;
+        --card: #ffffff;
+        --text: #1a1f2b;
+        --muted: #6b7280;
+        --primary: #2b6cb0;
+        --primary-dark: #1b4f86;
+        --accent: #7c3aed;
+        --success: #16a34a;
+        --warning: #d97706;
+        --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+        --radius: 16px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+      }
+
+      header {
+        background: radial-gradient(circle at top, #3b82f6, #1e3a8a);
+        color: #fff;
+        padding: 64px 24px 80px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+
+      .hero {
+        display: grid;
+        gap: 24px;
+      }
+
+      .hero h1 {
+        font-size: clamp(2rem, 4vw, 3.2rem);
+        margin-bottom: 8px;
+      }
+
+      .hero p {
+        max-width: 720px;
+        margin: 0;
+        font-size: 1.05rem;
+        opacity: 0.9;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 20px;
+      }
+
+      .btn {
+        border: none;
+        border-radius: 999px;
+        padding: 12px 22px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        background: #fff;
+        color: #1e3a8a;
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);
+      }
+
+      .btn.secondary {
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        box-shadow: none;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+      }
+
+      section {
+        padding: 64px 0;
+      }
+
+      h2 {
+        font-size: clamp(1.6rem, 3vw, 2.2rem);
+        margin-bottom: 16px;
+      }
+
+      .section-lead {
+        color: var(--muted);
+        max-width: 820px;
+        margin-bottom: 32px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 24px;
+      }
+
+      .grid.cards {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
+
+      .card {
+        background: var(--card);
+        border-radius: var(--radius);
+        padding: 24px;
+        box-shadow: var(--shadow);
+      }
+
+      .card h3 {
+        margin-top: 0;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(124, 58, 237, 0.12);
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      .split {
+        display: grid;
+        gap: 24px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      }
+
+      .chat-container {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 24px;
+      }
+
+      @media (max-width: 900px) {
+        .chat-container {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .chat-window {
+        background: var(--card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        min-height: 480px;
+      }
+
+      .chat-messages {
+        padding: 24px;
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .message {
+        max-width: 80%;
+        padding: 14px 18px;
+        border-radius: 18px;
+        font-size: 0.98rem;
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+      }
+
+      .message.user {
+        align-self: flex-end;
+        background: #dbeafe;
+      }
+
+      .message.bot {
+        align-self: flex-start;
+        background: #f3e8ff;
+      }
+
+      .chat-input {
+        padding: 18px 24px 24px;
+        border-top: 1px solid #e5e7eb;
+        display: grid;
+        gap: 12px;
+      }
+
+      .chat-input textarea {
+        width: 100%;
+        min-height: 70px;
+        resize: vertical;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid #d1d5db;
+        font-family: inherit;
+        font-size: 0.98rem;
+      }
+
+      .chat-input-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .chat-input-row button {
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .chat-input-row button.secondary {
+        background: #e2e8f0;
+        color: #1e293b;
+      }
+
+      .input-inline {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .input-inline input {
+        padding: 8px 12px;
+        border-radius: 10px;
+        border: 1px solid #cbd5f5;
+        font-size: 0.9rem;
+        min-width: 220px;
+      }
+
+      .insights {
+        display: grid;
+        gap: 16px;
+      }
+
+      .insight-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: #f8fafc;
+        font-size: 0.92rem;
+      }
+
+      .insight-item span {
+        color: var(--muted);
+      }
+
+      .tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .tag {
+        background: #e2e8f0;
+        color: #1f2937;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+      }
+
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+      }
+
+      .metric {
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin-top: 6px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--card);
+        border-radius: var(--radius);
+        overflow: hidden;
+        box-shadow: var(--shadow);
+      }
+
+      th,
+      td {
+        padding: 14px 16px;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      th {
+        background: #eff6ff;
+      }
+
+      footer {
+        padding: 40px 24px;
+        text-align: center;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="container hero">
+        <span class="badge">Dynamic AI Chatbot</span>
+        <h1>AMDOX Conversational AI Platform</h1>
+        <p>
+          A dynamic, NLP-powered chatbot that understands intent, detects sentiment,
+          learns from interactions, and delivers real-time insights across platforms.
+        </p>
+        <div class="hero-actions">
+          <a class="btn" href="#chat">Launch Live Demo</a>
+          <a class="btn secondary" href="#analytics">View Analytics</a>
+        </div>
+      </div>
+    </header>
+
+    <section>
+      <div class="container">
+        <h2>Project Overview</h2>
+        <p class="section-lead">
+          The Dynamic AI Chatbot blends Natural Language Processing, Machine Learning,
+          and Deep Learning to deliver conversational experiences for web apps, customer
+          support, and virtual assistants. It connects to existing APIs, adapts over time,
+          and surfaces actionable analytics.
+        </p>
+        <div class="grid cards">
+          <div class="card">
+            <h3>Conversational Intelligence</h3>
+            <p>Intent recognition, named entity extraction, and contextual memory keep the conversation natural.</p>
+          </div>
+          <div class="card">
+            <h3>Always-On Insights</h3>
+            <p>Track performance, satisfaction, and response efficiency with a smart analytics layer.</p>
+          </div>
+          <div class="card">
+            <h3>Deploy Anywhere</h3>
+            <p>Designed for web, mobile, WhatsApp, Slack, Telegram, and voice assistants.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <h2>Key Features</h2>
+        <p class="section-lead">
+          Each module in the chatbot stack works together to deliver contextual, adaptive, and
+          human-like conversations.
+        </p>
+        <div class="grid cards">
+          <div class="card">
+            <h3>NLP-Based Understanding</h3>
+            <ul>
+              <li>Intent recognition for user queries.</li>
+              <li>Named entity extraction to capture important details.</li>
+              <li>Contextual memory to keep conversations flowing.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Multi-Platform Integration</h3>
+            <ul>
+              <li>Web, mobile, Slack, WhatsApp, Telegram, and voice assistants.</li>
+              <li>API-first architecture for third-party services.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>AI-Powered Response Generation</h3>
+            <ul>
+              <li>Rule-based + ML-driven response models.</li>
+              <li>Generative AI (GPT-style) responses.</li>
+              <li>Pre-trained answers for FAQs.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Sentiment & Emotion Detection</h3>
+            <ul>
+              <li>Detects positive, negative, neutral sentiment.</li>
+              <li>Adjusts tone based on user emotion.</li>
+              <li>Personalized interactions.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Self-Learning AI</h3>
+            <ul>
+              <li>Reinforcement learning for continuous improvement.</li>
+              <li>Adaptive responses based on history.</li>
+              <li>Fallback handling when confidence is low.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Smart Analytics Dashboard</h3>
+            <ul>
+              <li>Conversation trends, user behavior, and performance metrics.</li>
+              <li>Visual insights on response effectiveness.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="chat">
+      <div class="container">
+        <h2>Live Chat Experience</h2>
+        <p class="section-lead">
+          Try the chatbot powered by the backend API. Send a message to see the AI response,
+          detected intent, sentiment, and entities in real time.
+        </p>
+        <div class="chat-container">
+          <div class="chat-window">
+            <div class="chat-messages" id="chatMessages">
+              <div class="message bot">
+                Hello! I am the AMDOX AI assistant. Ask me about pricing, support, or anything else.
+              </div>
+            </div>
+            <div class="chat-input">
+              <div class="input-inline">
+                <input id="apiBase" type="text" placeholder="API base URL (default: http://localhost:8000)" />
+                <button class="secondary" id="saveApiBase">Save API</button>
+              </div>
+              <textarea id="userInput" placeholder="Type a message..."></textarea>
+              <div class="chat-input-row">
+                <div>
+                  <strong>Session:</strong>
+                  <span id="sessionId">Not started</span>
+                </div>
+                <div class="input-inline">
+                  <button class="secondary" id="newSession">New Session</button>
+                  <button id="sendMessage">Send Message</button>
+                </div>
+              </div>
+              <small class="section-lead" style="margin: 0;">
+                Tip: run the backend with <code>python start.py</code> and keep it on localhost:8000.
+              </small>
+            </div>
+          </div>
+
+          <div class="card insights">
+            <h3>Live Response Insights</h3>
+            <div class="insight-item"><span>Intent</span><strong id="intentValue">—</strong></div>
+            <div class="insight-item"><span>Confidence</span><strong id="intentConfidence">—</strong></div>
+            <div class="insight-item"><span>Sentiment</span><strong id="sentimentValue">—</strong></div>
+            <div class="insight-item"><span>Emotion</span><strong id="emotionValue">—</strong></div>
+            <div class="insight-item"><span>Generated By</span><strong id="generatedBy">—</strong></div>
+            <div class="insight-item"><span>Response Time</span><strong id="responseTime">—</strong></div>
+            <div>
+              <p><strong>Entities</strong></p>
+              <div class="tag-list" id="entitiesList">
+                <span class="tag">No entities yet</span>
+              </div>
+            </div>
+            <div>
+              <p><strong>Sentiment Breakdown</strong></p>
+              <div class="tag-list" id="sentimentBreakdown">
+                <span class="tag">Polarity: —</span>
+                <span class="tag">Subjectivity: —</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="analytics">
+      <div class="container">
+        <h2>Smart Analytics Dashboard</h2>
+        <p class="section-lead">
+          Track chatbot performance and interaction trends using real-time metrics from the backend.
+        </p>
+        <div class="dashboard-grid">
+          <div class="card">
+            <h4>Total Messages</h4>
+            <div class="metric" id="totalMessages">—</div>
+          </div>
+          <div class="card">
+            <h4>Total Sessions</h4>
+            <div class="metric" id="totalSessions">—</div>
+          </div>
+          <div class="card">
+            <h4>Active Sessions (24h)</h4>
+            <div class="metric" id="activeSessions">—</div>
+          </div>
+          <div class="card">
+            <h4>Avg Response Time</h4>
+            <div class="metric" id="avgResponseTime">—</div>
+          </div>
+        </div>
+        <div class="split" style="margin-top: 24px;">
+          <div class="card">
+            <h3>Top Intents</h3>
+            <ul id="intentDistribution"></ul>
+          </div>
+          <div class="card">
+            <h3>Sentiment Distribution</h3>
+            <ul id="sentimentDistribution"></ul>
+          </div>
+          <div class="card">
+            <h3>Top Entities</h3>
+            <ul id="entityDistribution"></ul>
+          </div>
+        </div>
+        <div style="margin-top: 20px;">
+          <button class="btn secondary" id="refreshAnalytics">Refresh Analytics</button>
+          <span id="analyticsUpdated" class="section-lead"></span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <h2>Challenges &amp; Solutions</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Challenges</th>
+              <th>Proposed Solutions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Understanding complex user queries</td>
+              <td>Use advanced NLP models like GPT &amp; BERT</td>
+            </tr>
+            <tr>
+              <td>Handling multiple intents in one query</td>
+              <td>Implement intent prioritization algorithms</td>
+            </tr>
+            <tr>
+              <td>Real-time response optimization</td>
+              <td>Use WebSockets &amp; Redis caching</td>
+            </tr>
+            <tr>
+              <td>Ensuring AI bias-free and ethical responses</td>
+              <td>Implement fair AI training &amp; bias detection techniques</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <h2>Future Enhancements</h2>
+        <div class="grid cards">
+          <div class="card">
+            <h3>Voice-Enabled Chatbot</h3>
+            <p>Speech-to-text capabilities for hands-free interaction.</p>
+          </div>
+          <div class="card">
+            <h3>Multilingual Support</h3>
+            <p>Broader accessibility across global languages and dialects.</p>
+          </div>
+          <div class="card">
+            <h3>Predictive Suggestions</h3>
+            <p>AI-based recommendations to boost response efficiency.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Built for the AMDOX Dynamic AI Chatbot — connect the backend and start chatting.
+    </footer>
+
+    <script>
+      const chatMessages = document.getElementById("chatMessages");
+      const userInput = document.getElementById("userInput");
+      const sendButton = document.getElementById("sendMessage");
+      const sessionIdEl = document.getElementById("sessionId");
+      const newSessionBtn = document.getElementById("newSession");
+      const apiBaseInput = document.getElementById("apiBase");
+      const saveApiBaseBtn = document.getElementById("saveApiBase");
+      const refreshAnalyticsBtn = document.getElementById("refreshAnalytics");
+
+      const insightMap = {
+        intentValue: "intent",
+        intentConfidence: "intent_confidence",
+        generatedBy: "generated_by",
+        responseTime: "response_time_ms",
+      };
+
+      const state = {
+        sessionId: null,
+        apiBase: localStorage.getItem("amx_api_base") || "http://localhost:8000",
+      };
+
+      apiBaseInput.value = state.apiBase;
+
+      function appendMessage(role, text) {
+        const message = document.createElement("div");
+        message.className = `message ${role}`;
+        message.textContent = text;
+        chatMessages.appendChild(message);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      function updateSessionId(id) {
+        state.sessionId = id;
+        sessionIdEl.textContent = id || "Not started";
+      }
+
+      function updateInsights(payload) {
+        Object.entries(insightMap).forEach(([elementId, key]) => {
+          const el = document.getElementById(elementId);
+          if (!el) return;
+          const value = payload?.[key];
+          el.textContent = value === undefined || value === null ? "—" : value;
+        });
+
+        const sentiment = payload?.sentiment || {};
+        document.getElementById("sentimentValue").textContent =
+          sentiment.label ? `${sentiment.label}` : "—";
+        document.getElementById("emotionValue").textContent = sentiment.emotion || "—";
+
+        const sentimentBreakdown = document.getElementById("sentimentBreakdown");
+        sentimentBreakdown.innerHTML = "";
+        const polarity = document.createElement("span");
+        polarity.className = "tag";
+        polarity.textContent = `Polarity: ${sentiment.polarity ?? "—"}`;
+        const subjectivity = document.createElement("span");
+        subjectivity.className = "tag";
+        subjectivity.textContent = `Subjectivity: ${sentiment.subjectivity ?? "—"}`;
+        sentimentBreakdown.append(polarity, subjectivity);
+
+        const entitiesList = document.getElementById("entitiesList");
+        entitiesList.innerHTML = "";
+        const entities = payload?.entities || [];
+        if (!entities.length) {
+          const tag = document.createElement("span");
+          tag.className = "tag";
+          tag.textContent = "No entities yet";
+          entitiesList.appendChild(tag);
+        } else {
+          entities.forEach((entity) => {
+            const tag = document.createElement("span");
+            tag.className = "tag";
+            tag.textContent = `${entity.text} (${entity.label})`;
+            entitiesList.appendChild(tag);
+          });
+        }
+      }
+
+      async function sendMessage() {
+        const text = userInput.value.trim();
+        if (!text) return;
+        appendMessage("user", text);
+        userInput.value = "";
+        sendButton.disabled = true;
+        sendButton.textContent = "Sending...";
+
+        try {
+          const response = await fetch(`${state.apiBase}/api/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message: text,
+              session_id: state.sessionId || undefined,
+            }),
+          });
+          if (!response.ok) throw new Error(`API error: ${response.status}`);
+          const data = await response.json();
+          appendMessage("bot", data.reply);
+          updateSessionId(data.session_id);
+          updateInsights(data);
+        } catch (error) {
+          appendMessage("bot", "⚠️ Unable to reach the API. Check the server and API base URL.");
+          console.error(error);
+        } finally {
+          sendButton.disabled = false;
+          sendButton.textContent = "Send Message";
+        }
+      }
+
+      async function resetSession() {
+        if (state.sessionId) {
+          try {
+            await fetch(`${state.apiBase}/api/session/${state.sessionId}`, { method: "DELETE" });
+          } catch (error) {
+            console.warn("Failed to reset session", error);
+          }
+        }
+        chatMessages.innerHTML = "";
+        appendMessage("bot", "New session started. How can I help?");
+        updateSessionId(null);
+        updateInsights({});
+      }
+
+      function saveApiBase() {
+        state.apiBase = apiBaseInput.value.trim() || "http://localhost:8000";
+        localStorage.setItem("amx_api_base", state.apiBase);
+      }
+
+      async function refreshAnalytics() {
+        const updatedLabel = document.getElementById("analyticsUpdated");
+        updatedLabel.textContent = "Loading analytics...";
+
+        try {
+          const response = await fetch(`${state.apiBase}/api/analytics`);
+          if (!response.ok) throw new Error(`Analytics error: ${response.status}`);
+          const data = await response.json();
+
+          document.getElementById("totalMessages").textContent =
+            data?.overview?.total_messages ?? "—";
+          document.getElementById("totalSessions").textContent =
+            data?.overview?.total_sessions ?? "—";
+          document.getElementById("activeSessions").textContent =
+            data?.overview?.active_sessions_today ?? "—";
+          document.getElementById("avgResponseTime").textContent =
+            data?.avg_response_time ? `${data.avg_response_time} ms` : "—";
+
+          renderList("intentDistribution", data.intent_distribution, "intent");
+          renderList("entityDistribution", data.top_entities, "entity");
+          renderSentiments("sentimentDistribution", data.sentiment_distribution);
+
+          updatedLabel.textContent = data.generated_at
+            ? `Last updated: ${new Date(data.generated_at).toLocaleString()}`
+            : "Analytics loaded.";
+        } catch (error) {
+          updatedLabel.textContent = "Unable to load analytics.";
+          console.error(error);
+        }
+      }
+
+      function renderList(elementId, items, labelKey) {
+        const list = document.getElementById(elementId);
+        list.innerHTML = "";
+        if (!items || !items.length) {
+          const empty = document.createElement("li");
+          empty.textContent = "No data yet.";
+          list.appendChild(empty);
+          return;
+        }
+        items.forEach((item) => {
+          const li = document.createElement("li");
+          li.textContent = `${item[labelKey]} — ${item.count}`;
+          list.appendChild(li);
+        });
+      }
+
+      function renderSentiments(elementId, sentiments) {
+        const list = document.getElementById(elementId);
+        list.innerHTML = "";
+        if (!sentiments || Object.keys(sentiments).length === 0) {
+          const empty = document.createElement("li");
+          empty.textContent = "No data yet.";
+          list.appendChild(empty);
+          return;
+        }
+        Object.entries(sentiments).forEach(([label, count]) => {
+          const li = document.createElement("li");
+          li.textContent = `${label} — ${count}`;
+          list.appendChild(li);
+        });
+      }
+
+      sendButton.addEventListener("click", sendMessage);
+      userInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          sendMessage();
+        }
+      });
+      newSessionBtn.addEventListener("click", resetSession);
+      saveApiBaseBtn.addEventListener("click", saveApiBase);
+      refreshAnalyticsBtn.addEventListener("click", refreshAnalytics);
+
+      updateSessionId(null);
+      refreshAnalytics();
+    </script>
+  </body>
+</html>
