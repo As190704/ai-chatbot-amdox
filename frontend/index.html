@@ -247,6 +247,15 @@
         min-width: 220px;
       }
 
+      .helper-text {
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+
+      .helper-text.error {
+        color: #b91c1c;
+      }
+
       .insights {
         display: grid;
         gap: 16px;
@@ -438,6 +447,7 @@
                 <input id="apiBase" type="text" placeholder="API base URL (default: http://localhost:8000)" />
                 <button class="secondary" id="saveApiBase">Save API</button>
               </div>
+              <small id="apiBaseStatus" class="helper-text">Use HTTPS for production deployments.</small>
               <textarea id="userInput" placeholder="Type a message..."></textarea>
               <div class="chat-input-row">
                 <div>
@@ -590,6 +600,7 @@
       const newSessionBtn = document.getElementById("newSession");
       const apiBaseInput = document.getElementById("apiBase");
       const saveApiBaseBtn = document.getElementById("saveApiBase");
+      const apiBaseStatus = document.getElementById("apiBaseStatus");
       const refreshAnalyticsBtn = document.getElementById("refreshAnalytics");
 
       const insightMap = {
@@ -605,6 +616,7 @@
       };
 
       apiBaseInput.value = state.apiBase;
+      apiBaseStatus.textContent = "Use HTTPS for production deployments.";
 
       function appendMessage(role, text) {
         const message = document.createElement("div");
@@ -677,13 +689,19 @@
               session_id: state.sessionId || undefined,
             }),
           });
-          if (!response.ok) throw new Error(`API error: ${response.status}`);
+          if (!response.ok) {
+            const detail = await extractErrorDetails(response);
+            throw new Error(`API error ${response.status}${detail}`);
+          }
           const data = await response.json();
           appendMessage("bot", data.reply);
           updateSessionId(data.session_id);
           updateInsights(data);
         } catch (error) {
-          appendMessage("bot", "⚠️ Unable to reach the API. Check the server and API base URL.");
+          appendMessage(
+            "bot",
+            `⚠️ ${error?.message || "Unable to reach the API. Check the server and API base URL."}`
+          );
           console.error(error);
         } finally {
           sendButton.disabled = false;
@@ -706,8 +724,19 @@
       }
 
       function saveApiBase() {
-        state.apiBase = apiBaseInput.value.trim() || "http://localhost:8000";
+        const { value, error } = normalizeApiBase(apiBaseInput.value);
+        if (error) {
+          apiBaseStatus.textContent = error;
+          apiBaseStatus.classList.add("error");
+          return;
+        }
+        apiBaseStatus.classList.remove("error");
+        state.apiBase = value;
+        apiBaseInput.value = value;
         localStorage.setItem("amx_api_base", state.apiBase);
+        apiBaseStatus.textContent = state.apiBase.startsWith("https://")
+          ? "API base saved."
+          : "API base saved. Use HTTPS for production deployments.";
       }
 
       async function refreshAnalytics() {
@@ -716,7 +745,10 @@
 
         try {
           const response = await fetch(`${state.apiBase}/api/analytics`);
-          if (!response.ok) throw new Error(`Analytics error: ${response.status}`);
+          if (!response.ok) {
+            const detail = await extractErrorDetails(response);
+            throw new Error(`Analytics error ${response.status}${detail}`);
+          }
           const data = await response.json();
 
           document.getElementById("totalMessages").textContent =
@@ -736,8 +768,39 @@
             ? `Last updated: ${new Date(data.generated_at).toLocaleString()}`
             : "Analytics loaded.";
         } catch (error) {
-          updatedLabel.textContent = "Unable to load analytics.";
+          updatedLabel.textContent = error?.message || "Unable to load analytics.";
           console.error(error);
+        }
+      }
+
+      function normalizeApiBase(rawValue) {
+        const trimmed = rawValue.trim();
+        const fallback = "http://localhost:8000";
+        if (!trimmed) return { value: fallback, error: null };
+        try {
+          const url = new URL(trimmed);
+          if (!["http:", "https:"].includes(url.protocol)) {
+            return { value: null, error: "URL must start with http:// or https://." };
+          }
+          const normalized = `${url.origin}${url.pathname}`.replace(/\/+$/, "");
+          return { value: normalized || fallback, error: null };
+        } catch (error) {
+          return { value: null, error: "Enter a valid HTTP or HTTPS URL." };
+        }
+      }
+
+      async function extractErrorDetails(response) {
+        try {
+          const contentType = response.headers.get("content-type") || "";
+          if (contentType.includes("application/json")) {
+            const body = await response.json();
+            const detail = body?.detail || body?.error || body?.message;
+            return detail ? ` - ${detail}` : "";
+          }
+          const text = await response.text();
+          return text ? ` - ${text}` : "";
+        } catch (error) {
+          return "";
         }
       }
 
