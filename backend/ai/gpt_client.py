@@ -17,9 +17,6 @@ from config import settings
 
 logger = logging.getLogger(__name__)
 
-# ─────────────────────────────────────────────────────────────────────────────
-# System prompt — chatbot persona
-# ─────────────────────────────────────────────────────────────────────────────
 
 SYSTEM_PROMPT = """You are AMDOX AI, an intelligent, friendly, and helpful AI assistant.
 
@@ -112,8 +109,6 @@ class GPTClient:
         messages.append({"role": "user", "content": user_message})
         return await self.generate(messages)
 
-
-# ── Module-level singleton ─────────────────────────────────────────────────────
 _gpt_client: Optional[GPTClient] = None
 
 
